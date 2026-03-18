@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>광고주 검색</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --card:      #21253a;
+    --border:    #2e3350;
+    --accent:    #4f8ef7;
+    --accent2:   #38d9a9;
+    --purple:    #9b72f7;
+    --warn:      #f7794f;
+    --text:      #e8eaf6;
+    --text2:     #8b90b8;
+    --text3:     #555a7a;
+    --label-bg:  #2e3350;
+    --name-bg:   #1e2847;
+    --radius:    14px;
+    --radius-sm: 9px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(79,142,247,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 35% at 85% 80%, rgba(155,114,247,0.06) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 0 0 40px;
+  }
+
+  /* ── 헤더 ── */
+  .app-header {
+    background: rgba(26,29,39,0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: baseline; gap: 6px; }
+  .logo-main { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .logo-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; margin-bottom: 1px; flex-shrink: 0; box-shadow: 0 0 8px var(--accent); }
+  .logo-sub { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 0.3px; }
+
+  .header-btns { display: flex; gap: 8px; align-items: center; }
+
+  .btn-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: rgba(46,51,80,0.6);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-icon:active { background: rgba(79,142,247,0.2); color: var(--accent); }
+
+  .btn-refresh {
+    display: flex; align-items: center; gap: 5px;
+    padding: 8px 14px;
+    background: rgba(56,217,169,0.12);
+    border: 1px solid rgba(56,217,169,0.3);
+    color: var(--accent2);
+    border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: all 0.15s; letter-spacing: -0.2px;
+  }
+  .btn-refresh:active { background: rgba(56,217,169,0.22); }
+  .btn-refresh .icon { font-size: 14px; transition: transform 0.4s; }
+  .btn-refresh.loading .icon { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── 상태바 ── */
+  .status-bar {
+    margin: 10px 16px 0; padding: 9px 14px;
+    border-radius: var(--radius-sm); font-size: 12px; font-weight: 500;
+    display: none; animation: fadeIn 0.2s;
+  }
+  .status-bar.show { display: block; }
+  .status-bar.info    { background: rgba(79,142,247,0.12);  color: #90b8ff; border: 1px solid rgba(79,142,247,0.25); }
+  .status-bar.success { background: rgba(56,217,169,0.12);  color: #6ee7c7; border: 1px solid rgba(56,217,169,0.25); }
+  .status-bar.error   { background: rgba(247,121,79,0.12);  color: #ffaa88; border: 1px solid rgba(247,121,79,0.25); }
+
+  /* ── 설정 배너 ── */
+  .setup-banner {
+    margin: 14px 16px 0;
+    padding: 14px 16px;
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.3);
+    border-radius: var(--radius);
+    display: none;
+  }
+  .setup-banner.show { display: block; }
+  .setup-banner-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .setup-banner-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .btn-setup {
+    margin-top: 10px; padding: 8px 16px;
+    background: var(--accent); border: none; border-radius: var(--radius-sm);
+    color: #fff; font-size: 12px; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif; cursor: pointer;
+  }
+
+  /* ── 검색 ── */
+  .search-wrap { padding: 14px 16px 0; }
+  .search-box {
+    display: flex; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.12); }
+  .search-input {
+    flex: 1; padding: 14px 15px; background: transparent; border: none; outline: none;
+    font-size: 14px; font-family: 'Noto Sans KR', sans-serif; color: var(--text);
+  }
+  .search-input::placeholder { color: var(--text3); font-size: 13px; }
+  .btn-search {
+    padding: 0 20px; background: var(--accent); border: none; color: #fff;
+    font-size: 13px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: background 0.15s; letter-spacing: -0.2px;
+  }
+  .btn-search:active { background: #3a78e0; }
+
+  .content { padding: 14px 16px 0; }
+
+  /* ── 결과 카드 ── */
+  .result-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 12px; overflow: hidden;
+    animation: slideUp 0.18s ease both; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  }
+  @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  .ad-name-row {
+    background: var(--name-bg); padding: 11px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .ad-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.4px; flex: 1; }
+  .star-btn {
+    font-size: 20px; color: var(--text3); background: none; border: none;
+    cursor: pointer; padding: 2px 4px; transition: color 0.15s, transform 0.2s;
+    font-family: 'Noto Sans KR', sans-serif; line-height: 1;
+  }
+  .star-btn.active { color: #fbbf24; }
+  .star-btn:active { transform: scale(1.4); }
+
+  .ad-main-btns { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .ad-main-btns .nav-btn {
+    flex: 1; padding: 9px 4px; border: none; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; color: #fff; transition: opacity 0.15s, transform 0.1s; letter-spacing: -0.3px;
+  }
+  .ad-main-btns .nav-btn:active { opacity: 0.75; transform: scale(0.97); }
+  .nav-btn.sa  { background: var(--accent); }
+  .nav-btn.gfa { background: var(--accent2); color: #0f1117; }
+  .nav-btn.ac  { background: var(--purple); }
+
+  .ad-details { padding: 2px 0 8px; }
+  .detail-row {
+    display: grid; grid-template-columns: 88px 1fr; gap: 8px; align-items: center;
+    padding: 7px 14px; border-bottom: 1px solid rgba(46,51,80,0.6); min-height: 34px;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .d-label {
+    font-size: 10px; font-weight: 700; color: var(--text2);
+    background: var(--label-bg); padding: 3px 7px; border-radius: 6px;
+    text-align: center; letter-spacing: -0.1px; justify-self: start; white-space: nowrap;
+  }
+  .d-val {
+    font-size: 13px; color: var(--text); display: flex; align-items: center;
+    gap: 7px; min-width: 0; flex-wrap: wrap;
+  }
+  .d-val span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+  .d-val .id-blue  { color: #7eb3ff; font-weight: 700; }
+  .d-val .id-green { color: var(--accent2); font-weight: 700; }
+  .d-val a { color: #7eb3ff; text-decoration: none; }
+
+  .btn-inline {
+    padding: 4px 10px; border: none; border-radius: 6px;
+    font-size: 11px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; color: #fff; flex-shrink: 0; transition: opacity 0.15s;
+  }
+  .btn-inline:active { opacity: 0.7; }
+  .btn-inline.mail { background: var(--accent2); color: #0f1117; }
+
+  .empty-state { text-align: center; padding: 40px 20px; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; color: var(--text2); line-height: 1.7; }
+  .empty-sub  { font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+  .no-results {
+    text-align: center; color: var(--text2); font-size: 13px; padding: 28px;
+    background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  }
+
+  .result-item:nth-child(1)  { animation-delay: 0.00s; }
+  .result-item:nth-child(2)  { animation-delay: 0.04s; }
+  .result-item:nth-child(3)  { animation-delay: 0.08s; }
+  .result-item:nth-child(4)  { animation-delay: 0.12s; }
+  .result-item:nth-child(5)  { animation-delay: 0.16s; }
+  .result-item:nth-child(n+6){ animation-delay: 0.20s; }
+
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  .result-count { font-size: 11px; color: var(--text3); padding: 0 2px 10px; letter-spacing: -0.2px; }
+  .result-count strong { color: var(--accent); }
+
+  /* ── 설정 모달 ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 500px;
+    padding: 0 0 40px;
+    transform: translateY(30px);
+    transition: transform 0.25s ease;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--surface); z-index: 1;
+  }
+  .modal-title { font-size: 16px; font-weight: 800; letter-spacing: -0.4px; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--card); border: none; color: var(--text2);
+    font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:active { background: var(--border); }
+
+  .modal-body { padding: 20px; }
+
+  .setting-section { margin-bottom: 24px; }
+  .setting-section-title {
+    font-size: 11px; font-weight: 700; color: var(--accent);
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: 12px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .setting-field { margin-bottom: 16px; }
+  .setting-label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--text2); margin-bottom: 6px; letter-spacing: -0.2px;
+  }
+  .setting-label .req { color: var(--warn); font-size: 10px; margin-left: 4px; }
+  .setting-label .opt { color: var(--text3); font-size: 10px; margin-left: 4px; }
+
+  .setting-input {
+    width: 100%; padding: 11px 14px;
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .setting-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.12); }
+  .setting-input::placeholder { color: var(--text3); }
+
+  .setting-hint {
+    font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.6;
+  }
+  .setting-hint code {
+    background: var(--card); padding: 1px 5px; border-radius: 4px;
+    font-size: 11px; color: var(--accent2); font-family: monospace;
+  }
+
+  /* 열 가이드 테이블 */
+  .col-guide {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden; margin-top: 4px;
+  }
+  .col-guide-row {
+    display: grid; grid-template-columns: 28px 52px 1fr;
+    padding: 8px 12px; align-items: center;
+    border-bottom: 1px solid rgba(46,51,80,0.5); font-size: 12px;
+  }
+  .col-guide-row:last-child { border-bottom: none; }
+  .col-guide-row.header {
+    background: rgba(46,51,80,0.5); font-size: 10px; font-weight: 700;
+    color: var(--text3); padding: 5px 12px;
+  }
+  .col-letter { font-weight: 800; color: var(--accent); font-size: 13px; }
+  .col-req { color: var(--warn); font-size: 10px; font-weight: 700; }
+  .col-opt { color: var(--text3); font-size: 10px; }
+  .col-name { color: var(--text2); }
+
+  .btn-save {
+    width: 100%; padding: 14px;
+    background: var(--accent); border: none; border-radius: var(--radius);
+    color: #fff; font-size: 14px; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: background 0.15s; letter-spacing: -0.3px;
+  }
+  .btn-save:active { background: #3a78e0; }
+
+  .btn-reset {
+    width: 100%; padding: 11px; margin-top: 8px;
+    background: transparent; border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text3); font-size: 12px; font-weight: 600;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: all 0.15s; letter-spacing: -0.2px;
+  }
+  .btn-reset:active { border-color: var(--warn); color: var(--warn); }
+
+  .connected-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; background: rgba(56,217,169,0.12);
+    border: 1px solid rgba(56,217,169,0.3); border-radius: 20px;
+    font-size: 11px; font-weight: 600; color: var(--accent2);
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 헤더 -->
+  <div class="app-header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-main">광고주 검색</span>
+      <span class="logo-sub">AD SEARCH</span>
+    </div>
+    <div class="header-btns">
+      <button class="btn-icon" id="settingBtn" title="설정">⚙️</button>
+      <button class="btn-refresh" id="refreshBtn">
+        <span class="icon">↻</span> 새로고침
+      </button>
+    </div>
+  </div>
+
+  <!-- 상태바 -->
+  <div class="status-bar" id="statusBar"></div>
+
+  <!-- 설정 미완료 배너 -->
+  <div class="setup-banner" id="setupBanner">
+    <div class="setup-banner-title">⚙️ 시트 연결이 필요해요</div>
+    <div class="setup-banner-desc">구글 스프레드시트 URL을 설정하면<br>광고주 데이터를 불러올 수 있어요.</div>
+    <button class="btn-setup" id="setupBtn">지금 설정하기</button>
+  </div>
+
+  <!-- 검색 -->
+  <div class="search-wrap">
+    <div class="search-box">
+      <input class="search-input" type="text" id="searchInput" placeholder="광고주명, ID, 담당자, 연락처 검색...">
+      <button class="btn-search" id="searchBtn">검색</button>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="content" id="resultsContainer"></div>
+
+</div>
+
+<!-- 설정 모달 -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚙️ 설정</span>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 현재 연결 상태 -->
+      <div id="connectedBadge" style="display:none">
+        <div class="connected-badge">✅ 시트 연결됨</div>
+      </div>
+
+      <!-- 시트 URL 입력 -->
+      <div class="setting-section">
+        <div class="setting-section-title">📊 구글 시트 연결</div>
+
+        <div class="setting-field">
+          <label class="setting-label" for="inputSheetUrl">
+            스프레드시트 URL <span class="req">필수</span>
+          </label>
+          <input class="setting-input" type="url" id="inputSheetUrl"
+            placeholder="https://docs.google.com/spreadsheets/d/...">
+          <div class="setting-hint">
+            구글 시트 주소창의 URL 전체를 복사해서 붙여넣으세요.<br>
+            시트는 <code>링크가 있는 모든 사용자 → 뷰어</code> 로 공유되어야 해요.
+          </div>
+        </div>
+
+        <div class="setting-field">
+          <label class="setting-label" for="inputSheetGid">
+            시트 탭 GID <span class="opt">선택 · 기본값 0</span>
+          </label>
+          <input class="setting-input" type="text" id="inputSheetGid"
+            placeholder="0" maxlength="20">
+          <div class="setting-hint">
+            탭이 여러 개라면 해당 탭 URL의 <code>gid=숫자</code> 값을 입력하세요.<br>
+            첫 번째 탭은 보통 <code>0</code>이에요.
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 열 구성 가이드 -->
+      <div class="setting-section">
+        <div class="setting-section-title">📋 시트 열 구성 가이드</div>
+        <div class="setting-hint" style="margin-bottom:10px;">
+          1행은 헤더로 자동 건너뜁니다. <code>A열</code>부터 순서대로 입력하세요.
+        </div>
+        <div class="col-guide">
+          <div class="col-guide-row header">
+            <span>열</span><span>필수</span><span>항목</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">A</span>
+            <span class="col-req">★ 필수</span>
+            <span class="col-name">광고주명</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">B</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">담당자 ID</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">C</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">담당자 구분</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">D</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">연락처</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">E</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">이메일</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">F</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">URL</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">G</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">사업자번호</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">H</span>
+            <span class="col-req">★ 필수</span>
+            <span class="col-name">액세스 관리 계정번호 (관리번호)</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">I</span>
+            <span class="col-req">★ 필수</span>
+            <span class="col-name">검색광고 ID</span>
+          </div>
+          <div class="col-guide-row">
+            <span class="col-letter">J</span>
+            <span class="col-req">★ 필수</span>
+            <span class="col-name">GFA 계정 ID</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 저장 / 초기화 -->
+      <button class="btn-save" id="btnSave">저장하고 데이터 불러오기</button>
+      <button class="btn-reset" id="btnReset">설정 초기화</button>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const GFA_BASE = 'https://gfa.naver.com/adAccount/accounts/';
+  const PROXIES = [
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    url => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
+  ];
+
+  let advertisers = [];
+  let favorites = JSON.parse(localStorage.getItem('ad_favorites') || '[]');
+
+  /* ── DOM ── */
+  const statusBar     = document.getElementById('statusBar');
+  const searchInput   = document.getElementById('searchInput');
+  const searchBtn     = document.getElementById('searchBtn');
+  const refreshBtn    = document.getElementById('refreshBtn');
+  const resultsDiv    = document.getElementById('resultsContainer');
+  const settingBtn    = document.getElementById('settingBtn');
+  const setupBtn      = document.getElementById('setupBtn');
+  const setupBanner   = document.getElementById('setupBanner');
+  const modalOverlay  = document.getElementById('modalOverlay');
+  const modalClose    = document.getElementById('modalClose');
+  const inputSheetUrl = document.getElementById('inputSheetUrl');
+  const inputSheetGid = document.getElementById('inputSheetGid');
+  const btnSave       = document.getElementById('btnSave');
+  const btnReset      = document.getElementById('btnReset');
+  const connectedBadge = document.getElementById('connectedBadge');
+
+  /* ── 설정 관리 ── */
+  function loadConfig() {
+    return {
+      sheetUrl: localStorage.getItem('ad_sheet_url') || '',
+      sheetGid: localStorage.getItem('ad_sheet_gid') || '0',
+    };
+  }
+  function saveConfig(url, gid) {
+    localStorage.setItem('ad_sheet_url', url);
+    localStorage.setItem('ad_sheet_gid', gid || '0');
+  }
+  function clearConfig() {
+    localStorage.removeItem('ad_sheet_url');
+    localStorage.removeItem('ad_sheet_gid');
+  }
+  function extractSheetId(url) {
+    const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+  function buildCsvUrl(sheetUrl, gid) {
+    const id = extractSheetId(sheetUrl);
+    if (!id) return null;
+    return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid || '0'}`;
+  }
+
+  /* ── 모달 ── */
+  function openModal() {
+    const cfg = loadConfig();
+    inputSheetUrl.value = cfg.sheetUrl;
+    inputSheetGid.value = cfg.sheetGid === '0' && !cfg.sheetUrl ? '' : cfg.sheetGid;
+    connectedBadge.style.display = cfg.sheetUrl ? 'block' : 'none';
+    modalOverlay.classList.add('open');
+    setTimeout(() => inputSheetUrl.focus(), 300);
+  }
+  function closeModal() { modalOverlay.classList.remove('open'); }
+
+  settingBtn.addEventListener('click', openModal);
+  setupBtn.addEventListener('click', openModal);
+  modalClose.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+  btnSave.addEventListener('click', () => {
+    const url = inputSheetUrl.value.trim();
+    const gid = inputSheetGid.value.trim() || '0';
+    if (!url) { showStatus('❌ 스프레드시트 URL을 입력해주세요.', 'error'); return; }
+    if (!extractSheetId(url)) { showStatus('❌ 올바른 구글 시트 URL이 아닙니다.', 'error'); return; }
+    saveConfig(url, gid);
+    closeModal();
+    loadData(true);
+  });
+
+  btnReset.addEventListener('click', () => {
+    if (!confirm('설정을 초기화할까요?\n저장된 시트 정보가 삭제됩니다.')) return;
+    clearConfig();
+    advertisers = [];
+    renderEmpty();
+    setupBanner.classList.add('show');
+    closeModal();
+  });
+
+  /* ── 헬퍼 ── */
+  function showStatus(msg, type) {
+    statusBar.textContent = msg;
+    statusBar.className = 'status-bar show ' + type;
+    clearTimeout(statusBar._t);
+    statusBar._t = setTimeout(() => { statusBar.className = 'status-bar'; }, 3500);
+  }
+
+  function parseCSV(line) {
+    const r = []; let c = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { if (q && line[i+1] === '"') { c += '"'; i++; } else q = !q; }
+      else if (ch === ',' && !q) { r.push(c.trim()); c = ''; }
+      else c += ch;
+    }
+    r.push(c.trim());
+    return r;
+  }
+
+  function saveFavorites() { localStorage.setItem('ad_favorites', JSON.stringify(favorites)); }
+
+  /* ── 데이터 로드 ── */
+  // ── 메모리 캐시 ──
+  let cachedData = null;
+
+  async function fetchWithFallback(targetUrl) {
+    const bustUrl = targetUrl + '&_t=' + Date.now();
+    for (let i = 0; i < PROXIES.length; i++) {
+      const proxyUrl = PROXIES[i](bustUrl);
+      try {
+        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000), cache: 'no-store' });
+        if (res.ok) {
+          const text = await res.text();
+          if (text && text.length > 10) return text;
+        }
+      } catch (e) {
+        console.warn(`프록시 ${i+1} 실패:`, e.message);
+      }
+    }
+    throw new Error('모든 프록시 연결에 실패했습니다.');
+  }
+
+  async function loadData(forceRefresh = false) {
+    const cfg = loadConfig();
+    if (!cfg.sheetUrl) {
+      setupBanner.classList.add('show');
+      renderEmpty();
+      return;
+    }
+
+    // 메모리 캐시 활용 (새로고침 버튼 누를 때만 재요청)
+    if (!forceRefresh && cachedData) {
+      advertisers = cachedData;
+      if (searchInput.value.trim()) performSearch();
+      else renderEmpty();
+      return;
+    }
+
+    const csvUrl = buildCsvUrl(cfg.sheetUrl, cfg.sheetGid);
+    if (!csvUrl) {
+      showStatus('❌ 올바른 구글 시트 URL이 아닙니다. 설정을 확인해주세요.', 'error');
+      return;
+    }
+    setupBanner.classList.remove('show');
+    refreshBtn.classList.add('loading');
+    showStatus('📊 데이터 로드 중...', 'info');
+    try {
+      const csv = await fetchWithFallback(csvUrl);
+      const lines = csv.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) throw new Error('시트에 데이터가 없습니다.');
+      advertisers = [];
+      for (let i = 1; i < lines.length; i++) {
+        const v = parseCSV(lines[i]);
+        if (v.every(c => !c.trim())) continue;
+        if (v.length >= 10) {
+          const name     = v[0]?.trim() || '';
+          const accessNo = v[7]?.trim() || '';
+          const sa       = v[8]?.trim() || '';
+          const acc      = v[9]?.trim() || '';
+          if (!name || !accessNo || !sa || !acc) continue;
+          advertisers.push({
+            name,
+            managerId:  v[1] || '',
+            type:       v[2] || '',
+            contact:    v[3] || '',
+            email:      v[4] || '',
+            siteUrl:    v[5] || '',
+            regNo:      v[6] || '',
+            note:       v[7] || '',
+            accessNo,
+            searchAdId: sa,
+            accountId:  acc,
+          });
+        }
+      }
+      cachedData = advertisers; // 메모리 캐시 저장
+      showStatus(`✅ ${advertisers.length}개 광고주 로드 완료`, 'success');
+      if (searchInput.value.trim()) performSearch();
+      else renderEmpty();
+    } catch (e) {
+      showStatus('❌ ' + e.message, 'error');
+    } finally {
+      refreshBtn.classList.remove('loading');
+    }
+  }
+
+  /* ── 검색 ── */
+  function searchAdvertisers(q) {
+    const t = q.toLowerCase().trim();
+    return advertisers.filter(a =>
+      a.name.toLowerCase().includes(t) ||
+      a.managerId.toLowerCase().includes(t) ||
+      a.type.toLowerCase().includes(t) ||
+      a.contact.includes(t) ||
+      a.searchAdId.includes(t) ||
+      a.accountId.includes(t) ||
+      a.note.toLowerCase().includes(t) ||
+      a.regNo.includes(t) ||
+      a.siteUrl.toLowerCase().includes(t)
+    );
+  }
+
+  function performSearch() {
+    const q = searchInput.value.trim();
+    if (!q) { renderEmpty(); return; }
+    if (advertisers.length === 0) {
+      showStatus('❌ 데이터가 없습니다. 설정에서 시트를 연결해주세요.', 'error');
+      return;
+    }
+    displayResults(searchAdvertisers(q));
+  }
+
+  /* ── 렌더링 ── */
+  function renderEmpty() {
+    const cfg = loadConfig();
+    if (!cfg.sheetUrl) {
+      resultsDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚙️</div>
+          <div class="empty-text">설정에서 구글 시트를<br>연결해주세요</div>
+          <div class="empty-sub">우측 상단 ⚙️ 버튼을 눌러 시작하세요</div>
+        </div>`;
+    } else {
+      resultsDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-text">광고주명, ID, 담당자명 등으로<br>검색해보세요</div>
+          <div class="empty-sub">${advertisers.length > 0 ? `총 ${advertisers.length}개 로드됨` : '새로고침으로 데이터를 불러오세요'}</div>
+        </div>`;
+    }
+  }
+
+  function displayResults(results) {
+    resultsDiv.innerHTML = '';
+    if (results.length === 0) {
+      resultsDiv.innerHTML = '<div class="no-results">검색 결과가 없습니다.</div>';
+      return;
+    }
+    const countEl = document.createElement('div');
+    countEl.className = 'result-count';
+    countEl.innerHTML = `검색 결과 <strong>${results.length}건</strong>`;
+    resultsDiv.appendChild(countEl);
+    const frag = document.createDocumentFragment();
+    results.forEach(ad => frag.appendChild(createCard(ad)));
+    resultsDiv.appendChild(frag);
+  }
+
+  function createCard(ad) {
+    const isFav = favorites.includes(ad.name);
+    const el = document.createElement('div');
+    el.className = 'result-item';
+
+    const saBtn  = ad.searchAdId ? `<button class="nav-btn sa"  data-sa="${ad.searchAdId}">검색광고</button>` : '';
+    const gfaBtn = ad.accountId  ? `<button class="nav-btn gfa" data-gfa="${ad.accountId}" data-access="${ad.accessNo}">GFA</button>` : '';
+    const acBtn  = (ad.accountId || ad.searchAdId)
+      ? `<button class="nav-btn ac" data-account="${ad.accountId || ad.searchAdId}" data-access="${ad.accessNo}">통합센터</button>` : '';
+
+    const tel = ad.contact
+      ? `<a href="tel:${ad.contact.replace(/[^0-9]/g,'')}">${ad.contact}</a>`
+      : '<span>-</span>';
+
+    const mailBtn = ad.email
+      ? `<button class="btn-inline mail" data-email="${ad.email}">메일</button>` : '';
+
+    el.innerHTML = `
+      <div class="ad-name-row">
+        <span class="ad-name">${ad.name || '미등록'}</span>
+        <button class="star-btn ${isFav ? 'active' : ''}" data-name="${ad.name}">★</button>
+      </div>
+      ${(saBtn || gfaBtn || acBtn) ? `<div class="ad-main-btns">${saBtn}${gfaBtn}${acBtn}</div>` : ''}
+      <div class="ad-details">
+        <div class="detail-row">
+          <span class="d-label">검색광고 ID</span>
+          <div class="d-val"><span class="id-blue">${ad.searchAdId || '-'}</span></div>
+        </div>
+        <div class="detail-row">
+          <span class="d-label">GFA ID</span>
+          <div class="d-val"><span class="id-green">${ad.accountId || '-'}</span></div>
+        </div>
+        <div class="detail-row">
+          <span class="d-label">담당자</span>
+          <div class="d-val"><span>${ad.type || '-'}</span></div>
+        </div>
+        <div class="detail-row">
+          <span class="d-label">연락처</span>
+          <div class="d-val">${tel}</div>
+        </div>
+        <div class="detail-row">
+          <span class="d-label">이메일</span>
+          <div class="d-val"><span>${ad.email || '-'}</span>${mailBtn}</div>
+        </div>
+        <div class="detail-row">
+          <span class="d-label">URL</span>
+          <div class="d-val">${ad.siteUrl ? `<a href="${ad.siteUrl}" target="_blank" style="color:#7eb3ff;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${ad.siteUrl}</a>` : '<span>-</span>'}</div>
+        </div>
+        <div class="detail-row">
+          <span class="d-label">사업자번호</span>
+          <div class="d-val"><span>${ad.regNo || '-'}</span></div>
+        </div>
+        <div class="detail-row">
+          <span class="d-label">비고</span>
+          <div class="d-val"><span style="white-space:normal;word-break:break-all;">${ad.note || '-'}</span></div>
+        </div>
+      </div>
+    `;
+    return el;
+  }
+
+  /* ── 이벤트 위임 ── */
+  resultsDiv.addEventListener('click', function(e) {
+    const star = e.target.closest('.star-btn');
+    if (star) {
+      const name = star.dataset.name;
+      const idx = favorites.indexOf(name);
+      if (idx >= 0) favorites.splice(idx, 1); else favorites.unshift(name);
+      saveFavorites();
+      star.classList.toggle('active', favorites.includes(name));
+      return;
+    }
+    const sa = e.target.closest('[data-sa]');
+    if (sa) { window.open(`https://searchad.naver.com/membership/select-account?redirectUrl=https%3A%2F%2Fmanage.searchad.naver.com%2Fcustomers%2F${sa.dataset.sa}%2Fcampaigns`, '_blank'); return; }
+    const gfa = e.target.closest('[data-gfa]');
+    if (gfa) { window.open(`${GFA_BASE}${gfa.dataset.gfa}?accessManagerAccountNo=${gfa.dataset.access}`, '_blank'); return; }
+    const ac = e.target.closest('[data-account]');
+    if (ac) { window.open(`https://ads.naver.com/ad-account/${ac.dataset.account}/billing/balance?accessManagerAccountNo=${ac.dataset.access}`, '_blank'); return; }
+    const mail = e.target.closest('[data-email]');
+    if (mail) { window.open('https://gw.mailplug.com/mail/write', '_blank'); return; }
+  });
+
+  searchBtn.addEventListener('click', performSearch);
+  searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') performSearch(); });
+  searchInput.addEventListener('input', function() { if (!this.value.trim()) renderEmpty(); });
+  refreshBtn.addEventListener('click', () => loadData(true));
+
+  /* ── 초기화 ── */
+  loadData(true);
+})();
+</script>
+</body>
+</html>
