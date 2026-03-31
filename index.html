@@ -184,7 +184,6 @@
     cursor: pointer; color: #fff; transition: opacity 0.15s, transform 0.1s; letter-spacing: -0.3px;
   }
   .ad-main-btns .nav-btn:active { opacity: 0.75; transform: scale(0.97); }
-  .nav-btn.sa  { background: var(--accent); }
   .nav-btn.gfa { background: var(--accent2); color: #0f1117; }
   .nav-btn.ac  { background: var(--purple); }
 
@@ -207,14 +206,6 @@
   .d-val .id-blue  { color: #7eb3ff; font-weight: 700; }
   .d-val .id-green { color: var(--accent2); font-weight: 700; }
   .d-val a { color: #7eb3ff; text-decoration: none; }
-
-  .btn-inline {
-    padding: 4px 10px; border: none; border-radius: 6px;
-    font-size: 11px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
-    cursor: pointer; color: #fff; flex-shrink: 0; transition: opacity 0.15s;
-  }
-  .btn-inline:active { opacity: 0.7; }
-  .btn-inline.mail { background: var(--accent2); color: #0f1117; }
 
   .empty-state { text-align: center; padding: 40px 20px; }
   .empty-icon { font-size: 40px; margin-bottom: 12px; }
@@ -391,7 +382,7 @@
   <!-- 검색 -->
   <div class="search-wrap">
     <div class="search-box">
-      <input class="search-input" type="text" id="searchInput" placeholder="광고주명, ID, 담당자, 연락처 검색...">
+      <input class="search-input" type="text" id="searchInput" placeholder="광고주명, ID, 담당자 검색...">
       <button class="btn-search" id="searchBtn">검색</button>
     </div>
   </div>
@@ -458,52 +449,47 @@
           <div class="col-guide-row">
             <span class="col-letter">A</span>
             <span class="col-req">★ 필수</span>
-            <span class="col-name">광고주명</span>
+            <span class="col-name">관리자번호</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">B</span>
-            <span class="col-opt">선택</span>
-            <span class="col-name">담당자 ID</span>
+            <span class="col-req">★ 필수</span>
+            <span class="col-name">광고주센터ID</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">C</span>
-            <span class="col-opt">선택</span>
-            <span class="col-name">담당자명 </span>
+            <span class="col-req">★ 필수</span>
+            <span class="col-name">광고주명</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">D</span>
             <span class="col-opt">선택</span>
-            <span class="col-name">연락처</span>
+            <span class="col-name">담당자명</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">E</span>
             <span class="col-opt">선택</span>
-            <span class="col-name">이메일</span>
+            <span class="col-name">연락처</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">F</span>
             <span class="col-opt">선택</span>
-            <span class="col-name">URL</span>
+            <span class="col-name">이메일</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">G</span>
             <span class="col-opt">선택</span>
-            <span class="col-name">사업자번호</span>
+            <span class="col-name">URL</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">H</span>
-            <span class="col-req">★ 필수</span>
-            <span class="col-name">관리 계정 번호(5자리)</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">사업자번호</span>
           </div>
           <div class="col-guide-row">
             <span class="col-letter">I</span>
-            <span class="col-req">★ 필수</span>
-            <span class="col-name">검색광고 ID</span>
-          </div>
-          <div class="col-guide-row">
-            <span class="col-letter">J</span>
-            <span class="col-req">★ 필수</span>
-            <span class="col-name">통합광고주센터(GFA) ID</span>
+            <span class="col-opt">선택</span>
+            <span class="col-name">메모</span>
           </div>
         </div>
       </div>
@@ -629,7 +615,6 @@
   function saveFavorites() { localStorage.setItem('ad_favorites', JSON.stringify(favorites)); }
 
   /* ── 데이터 로드 ── */
-  // ── 메모리 캐시 ──
   let cachedData = null;
 
   async function fetchWithFallback(targetUrl) {
@@ -657,7 +642,6 @@
       return;
     }
 
-    // 메모리 캐시 활용 (새로고침 버튼 누를 때만 재요청)
     if (!forceRefresh && cachedData) {
       advertisers = cachedData;
       if (searchInput.value.trim()) performSearch();
@@ -681,28 +665,25 @@
       for (let i = 1; i < lines.length; i++) {
         const v = parseCSV(lines[i]);
         if (v.every(c => !c.trim())) continue;
-        if (v.length >= 10) {
-          const name     = v[0]?.trim() || '';
-          const accessNo = v[7]?.trim() || '';
-          const sa       = v[8]?.trim() || '';
-          const acc      = v[9]?.trim() || '';
-          if (!name || !accessNo || !sa || !acc) continue;
+        if (v.length >= 3) {
+          const adminNo   = v[0]?.trim() || '';
+          const centerID  = v[1]?.trim() || '';
+          const name      = v[2]?.trim() || '';
+          if (!adminNo || !centerID || !name) continue;
           advertisers.push({
+            adminNo,
+            centerID,
             name,
-            managerId:  v[1] || '',
-            type:       v[2] || '',
-            contact:    v[3] || '',
-            email:      v[4] || '',
-            siteUrl:    v[5] || '',
-            regNo:      v[6] || '',
-            note:       v[7] || '',
-            accessNo,
-            searchAdId: sa,
-            accountId:  acc,
+            type:       v[3] || '',
+            contact:    v[4] || '',
+            email:      v[5] || '',
+            siteUrl:    v[6] || '',
+            regNo:      v[7] || '',
+            note:       v[8] || '',
           });
         }
       }
-      cachedData = advertisers; // 메모리 캐시 저장
+      cachedData = advertisers;
       showStatus(`✅ ${advertisers.length}개 광고주 로드 완료`, 'success');
       if (searchInput.value.trim()) performSearch();
       else renderEmpty();
@@ -718,11 +699,10 @@
     const t = q.toLowerCase().trim();
     return advertisers.filter(a =>
       a.name.toLowerCase().includes(t) ||
-      a.managerId.toLowerCase().includes(t) ||
       a.type.toLowerCase().includes(t) ||
       a.contact.includes(t) ||
-      a.searchAdId.includes(t) ||
-      a.accountId.includes(t) ||
+      a.centerID.includes(t) ||
+      a.adminNo.includes(t) ||
       a.note.toLowerCase().includes(t) ||
       a.regNo.includes(t) ||
       a.siteUrl.toLowerCase().includes(t)
@@ -779,35 +759,31 @@
     const el = document.createElement('div');
     el.className = 'result-item';
 
-    const saBtn  = ad.searchAdId ? `<button class="nav-btn sa"  data-sa="${ad.searchAdId}">검색광고</button>` : '';
-    const gfaBtn = ad.accountId  ? `<button class="nav-btn gfa" data-gfa="${ad.accountId}" data-access="${ad.accessNo}">GFA</button>` : '';
-    const acBtn  = (ad.accountId || ad.searchAdId)
-      ? `<button class="nav-btn ac" data-account="${ad.accountId || ad.searchAdId}" data-access="${ad.accessNo}">통합센터</button>` : '';
+    const gfaBtn = ad.centerID  ? `<button class="nav-btn gfa" data-gfa="${ad.centerID}" data-access="${ad.adminNo}">광고주센터</button>` : '';
+    const acBtn  = ad.centerID
+      ? `<button class="nav-btn ac" data-account="${ad.centerID}" data-access="${ad.adminNo}">통합대시보드</button>` : '';
 
     const tel = ad.contact
       ? `<a href="tel:${ad.contact.replace(/[^0-9]/g,'')}">${ad.contact}</a>`
       : '<span>-</span>';
-
-    const mailBtn = ad.email
-      ? `<button class="btn-inline mail" data-email="${ad.email}">메일</button>` : '';
 
     el.innerHTML = `
       <div class="ad-name-row">
         <span class="ad-name">${ad.name || '미등록'}</span>
         <button class="star-btn ${isFav ? 'active' : ''}" data-name="${ad.name}">★</button>
       </div>
-      ${(saBtn || gfaBtn || acBtn) ? `<div class="ad-main-btns">${saBtn}${gfaBtn}${acBtn}</div>` : ''}
+      ${(gfaBtn || acBtn) ? `<div class="ad-main-btns">${gfaBtn}${acBtn}</div>` : ''}
       <div class="ad-details">
         <div class="detail-row">
-          <span class="d-label">검색광고 ID</span>
-          <div class="d-val"><span class="id-blue">${ad.searchAdId || '-'}</span></div>
+          <span class="d-label">광고주센터ID</span>
+          <div class="d-val"><span class="id-green">${ad.centerID || '-'}</span></div>
         </div>
         <div class="detail-row">
-          <span class="d-label">GFA ID</span>
-          <div class="d-val"><span class="id-green">${ad.accountId || '-'}</span></div>
+          <span class="d-label">관리자번호</span>
+          <div class="d-val"><span class="id-blue">${ad.adminNo || '-'}</span></div>
         </div>
         <div class="detail-row">
-          <span class="d-label">담당자</span>
+          <span class="d-label">담당자명</span>
           <div class="d-val"><span>${ad.type || '-'}</span></div>
         </div>
         <div class="detail-row">
@@ -816,7 +792,7 @@
         </div>
         <div class="detail-row">
           <span class="d-label">이메일</span>
-          <div class="d-val"><span>${ad.email || '-'}</span>${mailBtn}</div>
+          <div class="d-val"><span>${ad.email || '-'}</span></div>
         </div>
         <div class="detail-row">
           <span class="d-label">URL</span>
@@ -827,7 +803,7 @@
           <div class="d-val"><span>${ad.regNo || '-'}</span></div>
         </div>
         <div class="detail-row">
-          <span class="d-label">비고</span>
+          <span class="d-label">메모</span>
           <div class="d-val"><span style="white-space:normal;word-break:break-all;">${ad.note || '-'}</span></div>
         </div>
       </div>
@@ -846,14 +822,10 @@
       star.classList.toggle('active', favorites.includes(name));
       return;
     }
-    const sa = e.target.closest('[data-sa]');
-    if (sa) { window.open(`https://searchad.naver.com/membership/select-account?redirectUrl=https%3A%2F%2Fmanage.searchad.naver.com%2Fcustomers%2F${sa.dataset.sa}%2Fcampaigns`, '_blank'); return; }
     const gfa = e.target.closest('[data-gfa]');
     if (gfa) { window.open(`${GFA_BASE}${gfa.dataset.gfa}?accessManagerAccountNo=${gfa.dataset.access}`, '_blank'); return; }
     const ac = e.target.closest('[data-account]');
     if (ac) { window.open(`https://ads.naver.com/ad-account/${ac.dataset.account}/billing/balance?accessManagerAccountNo=${ac.dataset.access}`, '_blank'); return; }
-    const mail = e.target.closest('[data-email]');
-    if (mail) { window.open('https://gw.mailplug.com/mail/write', '_blank'); return; }
   });
 
   searchBtn.addEventListener('click', performSearch);
