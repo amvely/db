@@ -702,7 +702,6 @@
       a.type.toLowerCase().includes(t) ||
       a.contact.includes(t) ||
       a.centerID.includes(t) ||
-      a.adminNo.includes(t) ||
       a.note.toLowerCase().includes(t) ||
       a.regNo.includes(t) ||
       a.siteUrl.toLowerCase().includes(t)
@@ -778,10 +777,7 @@
           <span class="d-label">광고주센터ID</span>
           <div class="d-val"><span class="id-green">${ad.centerID || '-'}</span></div>
         </div>
-        <div class="detail-row">
-          <span class="d-label">관리자번호</span>
-          <div class="d-val"><span class="id-blue">${ad.adminNo || '-'}</span></div>
-        </div>
+
         <div class="detail-row">
           <span class="d-label">담당자명</span>
           <div class="d-val"><span>${ad.type || '-'}</span></div>
