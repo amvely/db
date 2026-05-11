@@ -342,6 +342,16 @@
   }
   .btn-reset:active { border-color: var(--warn); color: var(--warn); }
 
+  .btn-example {
+    width: 100%; padding: 11px; margin-bottom: 10px;
+    background: rgba(56,217,169,0.1); border: 1px solid rgba(56,217,169,0.35);
+    border-radius: var(--radius);
+    color: var(--accent2); font-size: 12px; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer; transition: all 0.15s; letter-spacing: -0.2px;
+  }
+  .btn-example:active { background: rgba(56,217,169,0.2); }
+
   .connected-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 10px; background: rgba(56,217,169,0.12);
@@ -494,6 +504,9 @@
         </div>
       </div>
 
+      <!-- DB 예시 파일 -->
+      <button class="btn-example" id="btnExample">📄 DB 예시 파일 열기</button>
+
       <!-- 저장 / 초기화 -->
       <button class="btn-save" id="btnSave">저장하고 데이터 불러오기</button>
       <button class="btn-reset" id="btnReset">설정 초기화</button>
@@ -581,6 +594,10 @@
     saveConfig(url, gid);
     closeModal();
     loadData(true);
+  });
+
+  document.getElementById('btnExample').addEventListener('click', () => {
+    window.open('https://docs.google.com/spreadsheets/d/1KCc8SRSS6aH2sMHyGET1jWiPmheIAtbULr5-TAnvSLw/edit?gid=0#gid=0', '_blank');
   });
 
   btnReset.addEventListener('click', () => {
